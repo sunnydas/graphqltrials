@@ -2,14 +2,17 @@ package com.sunny.graphql.mutation;
 
 import com.coxautodev.graphql.tools.GraphQLRootResolver;
 import com.sunny.graphql.auth.AuthContext;
-import com.sunny.graphql.data.AuthData;
-import com.sunny.graphql.data.Link;
-import com.sunny.graphql.data.SigninPayload;
-import com.sunny.graphql.data.User;
+import com.sunny.graphql.data.*;
 import com.sunny.graphql.data.repository.LinkRepository;
 import com.sunny.graphql.data.repository.UserRepository;
+import com.sunny.graphql.data.repository.VoteRepository;
 import graphql.GraphQLException;
 import graphql.schema.DataFetchingEnvironment;
+import org.bson.Document;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 /**
  * Created by sundas on 12/6/2017.
@@ -20,10 +23,14 @@ public class Mutation implements GraphQLRootResolver {
 
   private final UserRepository userRepository;
 
-  public Mutation(LinkRepository linkRepository,UserRepository userRepository) {
+  private final VoteRepository voteRepository;
+
+  public Mutation(LinkRepository linkRepository,UserRepository userRepository,VoteRepository voteRepository) {
     this.linkRepository = linkRepository;
     this.userRepository = userRepository;
+    this.voteRepository = voteRepository;
   }
+
 
   //The way to inject the context is via DataFetchingEnvironment
   public Link createLink(String url, String description, DataFetchingEnvironment env) {
@@ -44,5 +51,10 @@ public class Mutation implements GraphQLRootResolver {
       return new SigninPayload(user.getId(), user);
     }
     throw new GraphQLException("Invalid credentials");
+  }
+
+  public Vote createVote(String linkId, String userId) {
+    ZonedDateTime now = Instant.now().atZone(ZoneOffset.UTC);
+    return voteRepository.saveVote(new Vote(now, userId, linkId));
   }
 }
